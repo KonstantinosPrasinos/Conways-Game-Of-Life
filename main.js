@@ -1,7 +1,12 @@
+// Any live cell with two or three live neighbours survives.
+// Any dead cell with three live neighbours becomes a live cell.
+// All other live cells die in the next generation. Similarly, all other dead cells stay dead.
+
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
-const nRows = Math.floor((window.innerHeight / 50) - 1);
-const nColumns = Math.floor((window.innerWidth / 50) - 1);
+const dimensionsOfRect = 10;
+const nRows = Math.floor((window.innerHeight / dimensionsOfRect) - 1);
+const nColumns = Math.floor((window.innerWidth / dimensionsOfRect) - 1);
 let gameIsBeingPlayed = true;
 
 function getRandom(min, max) {
@@ -19,11 +24,11 @@ function drawPopulations() {
             } else {
                 ctx.fillStyle = 'black';
             }
-            ctx.fillRect(posX, posY, 50, 50);
-            posX += 51;
+            ctx.fillRect(posX, posY, dimensionsOfRect, dimensionsOfRect);
+            posX += dimensionsOfRect + 1;
         })
         posX = 10;
-        posY += 51;
+        posY += dimensionsOfRect + 1;
     });
 
     ctx.stroke;
@@ -41,7 +46,7 @@ let engine = {
         }
     },
     placePopulations: function () {
-        for (let i = 0; i < getRandom(10, 25); i++) {
+        for (let i = 0; i < getRandom(nRows * nColumns / 4, nRows * nColumns / 2); i++) {
             this.blocks[getRandom(0, nRows - 1)][getRandom(0, nColumns - 1)] = 1;
         }
     },
@@ -56,6 +61,11 @@ let engine = {
             deletedColumn: []
         }
 
+        let toBeMadeAlive = {
+            aliveRow: [],
+            aliveColumn: []
+        }
+
         for (let i = 0; i < this.blocks.length; i++) {
             for (let j = 0; j < this.blocks[i].length; j++) {
                 if (this.blocks[i][j] == 1) {
@@ -63,49 +73,79 @@ let engine = {
                     if (neighbours != 2 && neighbours != 3) {
                         toBeDeleted.deletedRow.push(i);
                         toBeDeleted.deletedColumn.push(j);
-                    } 
+                    }
+                } else {
+                    let neighbours = this.checkNeighbours(i, j, 1);
+                    if (neighbours == 3){
+                        toBeMadeAlive.aliveRow.push(i);
+                        toBeMadeAlive.aliveColumn.push(j);
+                    }
                 }
             }
         }
 
         this.deletePopulations(toBeDeleted);
+        this.giveLifetoPopulation(toBeMadeAlive);
         drawPopulations();
     },
     checkNeighbours: function (row, column, equalTo) {
         let neighbours = 0;
 
+        if (row > 0){
             if (this.blocks[row - 1][column] == equalTo) {
                 neighbours++;
             }
+        }
+        if (row < nRows - 1){
             if (this.blocks[row + 1][column] == equalTo) {
                 neighbours++;
             }
+        }
+        if (column > 0){
             if (this.blocks[row][column - 1] == equalTo) {
                 neighbours++;
             }
+        }
+        if (column < nColumns - 1){
             if (this.blocks[row][column + 1] == equalTo) {
                 neighbours++;
             }
+        }
+        if (row > 0 && column > 0){
             if (this.blocks[row - 1][column - 1] == equalTo) {
                 neighbours++;
             }
+        }
+        if (row > 0 && column < nColumns - 1){
             if (this.blocks[row - 1][column + 1] == equalTo) {
                 neighbours++;
             }
+        }
+        if (row < nRows - 1 && column > 0){
             if (this.blocks[row + 1][column - 1] == equalTo) {
                 neighbours++;
             }
+        }
+        if (row < nRows - 1 && column < nColumns - 1){
             if (this.blocks[row + 1][column + 1] == equalTo) {
                 neighbours++;
             }
+        }
 
         return neighbours;
     },
     deletePopulations: function (toBeDeleted) {
-        for (let i = toBeDeleted.deletedRow.length - 1; i >= 0; i--){
+        for (let i = toBeDeleted.deletedRow.length - 1; i >= 0; i--) {
             this.blocks[toBeDeleted.deletedRow[i]][toBeDeleted.deletedColumn[i]] = 0;
             toBeDeleted.deletedRow.pop();
             toBeDeleted.deletedColumn.pop();
+        }
+    },
+    giveLifetoPopulation: function (toBeMadeAlive) {
+        for (let i = toBeMadeAlive.aliveRow.length - 1; i >= 0; i--) {
+            this.blocks[toBeMadeAlive.aliveRow[i]][toBeMadeAlive.aliveColumn[i]] = 1;
+            toBeMadeAlive.aliveRow.pop();
+            toBeMadeAlive.aliveColumn.pop();
         }
     }
 }
@@ -115,14 +155,4 @@ engine.placePopulations();
 
 drawPopulations();
 
-setTimeout(() => {let ticks = setInterval(() => {engine.handleTicks();}, 1000);}, 5000 );
-
-// Any live cell with two or three live neighbours survives.
-// Any dead cell with three live neighbours becomes a live cell.
-// All other live cells die in the next generation. Similarly, all other dead cells stay dead.
-
-//Have to do:
-//Fix issue with edges. maybe using undefined?
-//Implement second rule.
-//Make into larger scale.
-//Add reset for when all populations die.
+setTimeout(() => { let ticks = setInterval(() => { engine.handleTicks(); }, 10); }, 5000);
