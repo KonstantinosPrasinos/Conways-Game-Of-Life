@@ -154,7 +154,6 @@ let engine = {
                             toBeDeleted.deletedColumn.push(j);
                         } else {
                             this.blocks[i][j].roundsAlive++;
-                            console.log(this.blocks[i][j].roundsAlive);
                         }
                     } else {
                         let neighbours = this.checkNeighbours(i, j, 1);
