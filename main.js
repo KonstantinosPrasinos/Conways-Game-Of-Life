@@ -44,9 +44,11 @@ function cellDrawing() {
     let isDrawing = false;
     canvas.addEventListener('mousedown', () => {
         isDrawing = true;
+        engine.gameIsPaused = true;
     });
     canvas.addEventListener('mouseup', () => {
         isDrawing = false;
+        engine.gameIsPaused = false;
     });
     canvas.addEventListener('mousemove', event => {
         if (isDrawing) {
@@ -68,6 +70,7 @@ function cellDrawing() {
 
 let engine = {
     tick: 0,
+    gameIsPaused: false,
     blocks: new Array(nRows),
     initialiseArray: function () {
         for (let i = 0; i < this.blocks.length; i++) {
@@ -96,27 +99,29 @@ let engine = {
             aliveColumn: []
         }
 
-        for (let i = 0; i < this.blocks.length; i++) {
-            for (let j = 0; j < this.blocks[i].length; j++) {
-                if (this.blocks[i][j].isAlive == 1) {
-                    let neighbours = this.checkNeighbours(i, j, 1);
-                    if (neighbours != 2 && neighbours != 3) {
-                        toBeDeleted.deletedRow.push(i);
-                        toBeDeleted.deletedColumn.push(j);
-                    }
-                } else {
-                    let neighbours = this.checkNeighbours(i, j, 1);
-                    if (neighbours == 3) {
-                        toBeMadeAlive.aliveRow.push(i);
-                        toBeMadeAlive.aliveColumn.push(j);
+        if (!this.gameIsPaused) {
+            for (let i = 0; i < this.blocks.length; i++) {
+                for (let j = 0; j < this.blocks[i].length; j++) {
+                    if (this.blocks[i][j].isAlive == 1) {
+                        let neighbours = this.checkNeighbours(i, j, 1);
+                        if (neighbours != 2 && neighbours != 3) {
+                            toBeDeleted.deletedRow.push(i);
+                            toBeDeleted.deletedColumn.push(j);
+                        }
+                    } else {
+                        let neighbours = this.checkNeighbours(i, j, 1);
+                        if (neighbours == 3) {
+                            toBeMadeAlive.aliveRow.push(i);
+                            toBeMadeAlive.aliveColumn.push(j);
+                        }
                     }
                 }
             }
-        }
 
-        this.deletePopulations(toBeDeleted);
-        this.giveLifetoPopulation(toBeMadeAlive);
-        drawPopulations();
+            this.deletePopulations(toBeDeleted);
+            this.giveLifetoPopulation(toBeMadeAlive);
+            drawPopulations();
+        }
     },
     checkNeighbours: function (row, column, equalTo) {
         let neighbours = 0;
@@ -190,5 +195,5 @@ if (gameIsRandom == true) {
 
 drawPopulations();
 
-setTimeout(() => { let ticks = setInterval(() => { engine.handleTicks(); }, 10); }, 5000);
+let ticks = setInterval(() => { engine.handleTicks(); }, 10);
 cellDrawing();
