@@ -5,12 +5,29 @@
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 const dimensionsOfRect = 10;
-const nRows = Math.floor((window.innerHeight / dimensionsOfRect) - 1);
-const nColumns = Math.floor((window.innerWidth / dimensionsOfRect) - 1);
-let gameIsRandom = false;
+const nRows = Math.floor(((window.innerHeight - (window.innerHeight / dimensionsOfRect)) / dimensionsOfRect) - 2);
+const nColumns = Math.floor(((window.innerWidth - (window.innerWidth / dimensionsOfRect)) / dimensionsOfRect) - 2);
 let mouseCoords = {
     x: 0,
     y: 0
+}
+let buttonPressed = false;
+
+function buttonToggleRandom(){
+    engine.gameIsRandom = !engine.gameIsRandom;
+    startGame();
+}
+
+function buttonTogglePause() {
+    engine.gameIsPaused = !engine.gameIsPaused;
+    if (!engine.gameIsPaused) {
+        document.getElementById("pauseButton").innerHTML = "Game is NOT paused";
+        buttonPressed = false;
+    } else {
+        document.getElementById("pauseButton").innerHTML = "Game is paused";
+        buttonPressed = true;
+    }
+
 }
 
 function getRandom(min, max) {
@@ -41,36 +58,64 @@ function drawPopulations() {
 }
 
 function cellDrawing() {
-    let isDrawing = false;
-    canvas.addEventListener('mousedown', () => {
-        isDrawing = true;
-        engine.gameIsPaused = true;
-    });
-    canvas.addEventListener('mouseup', () => {
-        isDrawing = false;
-        engine.gameIsPaused = false;
-    });
-    canvas.addEventListener('mousemove', event => {
-        if (isDrawing) {
-            mouseCoords.x = event.offsetX;
-            mouseCoords.y = event.offsetY;
+    if (!engine.gameIsRandom) {
+        let isDrawing = false;
+        canvas.addEventListener('mousedown', () => {
+            isDrawing = true;
+            engine.gameIsPaused = true;
+        });
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+            if (!buttonPressed) {
+                engine.gameIsPaused = false;
+            }
+        });
+        canvas.addEventListener('mousemove', event => {
+            if (isDrawing) {
+                mouseCoords.x = event.offsetX;
+                mouseCoords.y = event.offsetY;
 
-            engine.blocks.forEach(row => {
-                row.forEach(column => {
-                    if (column.x <= event.offsetX && column.x + dimensionsOfRect > event.offsetX && column.y <= event.offsetY && column.y + dimensionsOfRect > event.offsetY) {
-                        column.isAlive = 1;
-                        ctx.fillStyle = 'black';
-                        ctx.fillRect(column.x, column.y, dimensionsOfRect, dimensionsOfRect);
-                    }
-                })
-            });
-        }
-    });
+                engine.blocks.forEach(row => {
+                    row.forEach(column => {
+                        if (column.x <= event.offsetX && column.x + dimensionsOfRect > event.offsetX && column.y <= event.offsetY && column.y + dimensionsOfRect > event.offsetY) {
+                            column.isAlive = 1;
+                            ctx.fillStyle = 'black';
+                            ctx.fillRect(column.x, column.y, dimensionsOfRect, dimensionsOfRect);
+                        }
+                    })
+                });
+            }
+        });
+    }
+
+}
+
+function startGame() {
+    engine.tick = 0;
+    gameIsPaused = false;
+    blocks = new Array(nRows);
+
+    engine.initialiseArray();
+
+    if (engine.gameIsRandom){
+        engine.placeRandomPopulations();
+        document.getElementById("randomButton").innerHTML = "Cells are placed Randomly";
+    } else {
+        engine.placeDrawnPopulations();
+        document.getElementById("randomButton").innerHTML = "Cells are NOT placed Randomly";
+    }
+
+    drawPopulations();
+
+    let ticks = setInterval(() => { engine.handleTicks();}, 10);
+    
+    cellDrawing();
 }
 
 let engine = {
     tick: 0,
     gameIsPaused: false,
+    gameIsRandom: false,
     blocks: new Array(nRows),
     initialiseArray: function () {
         for (let i = 0; i < this.blocks.length; i++) {
@@ -121,6 +166,7 @@ let engine = {
             this.deletePopulations(toBeDeleted);
             this.giveLifetoPopulation(toBeMadeAlive);
             drawPopulations();
+            this.tick++;
         }
     },
     checkNeighbours: function (row, column, equalTo) {
@@ -184,16 +230,4 @@ let engine = {
         }
     }
 }
-
-engine.initialiseArray();
-
-if (gameIsRandom == true) {
-    engine.placeRandomPopulations();
-} else {
-    engine.placeDrawnPopulations();
-}
-
-drawPopulations();
-
-let ticks = setInterval(() => { engine.handleTicks(); }, 10);
-cellDrawing();
+startGame();
