@@ -45,7 +45,7 @@ function drawPopulations() {
                 column.x = posX;
                 column.y = posY;
             } else {
-                ctx.fillStyle = 'black';
+                ctx.fillStyle = `rgb(${column.roundsAlive <= 255 ? 255 - column.roundsAlive : 0}, 0, 0)`;
             }
             ctx.fillRect(posX, posY, dimensionsOfRect, dimensionsOfRect);
             posX += dimensionsOfRect + 1;
@@ -79,7 +79,7 @@ function cellDrawing() {
                     row.forEach(column => {
                         if (column.x <= event.offsetX && column.x + dimensionsOfRect > event.offsetX && column.y <= event.offsetY && column.y + dimensionsOfRect > event.offsetY) {
                             column.isAlive = 1;
-                            ctx.fillStyle = 'black';
+                            ctx.fillStyle = `rgb(${column.roundsAlive <= 255 ? 255 - column.roundsAlive : 0}, 0, 0)`;
                             ctx.fillRect(column.x, column.y, dimensionsOfRect, dimensionsOfRect);
                         }
                     })
@@ -121,7 +121,7 @@ let engine = {
         for (let i = 0; i < this.blocks.length; i++) {
             this.blocks[i] = new Array(nColumns);
             for (let j = 0; j < this.blocks[i].length; j++) {
-                this.blocks[i][j] = { x: j, y: i, isAlive: 0 };
+                this.blocks[i][j] = { x: j, y: i, isAlive: 0, roundsAlive: 0 };
             }
         }
     },
@@ -152,6 +152,9 @@ let engine = {
                         if (neighbours != 2 && neighbours != 3) {
                             toBeDeleted.deletedRow.push(i);
                             toBeDeleted.deletedColumn.push(j);
+                        } else {
+                            this.blocks[i][j].roundsAlive++;
+                            console.log(this.blocks[i][j].roundsAlive);
                         }
                     } else {
                         let neighbours = this.checkNeighbours(i, j, 1);
@@ -225,6 +228,7 @@ let engine = {
     giveLifetoPopulation: function (toBeMadeAlive) {
         for (let i = toBeMadeAlive.aliveRow.length - 1; i >= 0; i--) {
             this.blocks[toBeMadeAlive.aliveRow[i]][toBeMadeAlive.aliveColumn[i]].isAlive = 1;
+            this.blocks[toBeMadeAlive.aliveRow[i]][toBeMadeAlive.aliveColumn[i]].roundsAlive = 1;
             toBeMadeAlive.aliveRow.pop();
             toBeMadeAlive.aliveColumn.pop();
         }
